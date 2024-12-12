@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Suhu dan Kelembapan</title>
+    <style>
+        html {
+            background-color: rgb(63, 63, 63); 
+            color: white;
+        }
+        body {  
+            text-align: center;
+            margin: 0;
+            position: absolute;
+            top: 50vh; 
+            left: 50vh;
+        }
+        span {
+            font-size: large;
+            font-weight: bolder;
+        }
+    </style>
+</head>
+<body>
+    <h1>Monitoring Suhu dan Kelembapan</h1>
+    <p>Suhu: <span id="temperature">--</span> °C</p>
+    <p>Kelembapan: <span id="humidity">--</span> %</p>
+    <p>Update Terakhir: <span id="time">--</span></p>
+    <script>
+        async function fetchSensorData() {
+            console.log('Ambil data ke server...');
+            try {
+                const response = await fetch('/sensor');
+                console.log(response);
+                const data = await response.json();
+                console.log(data);
+                document.getElementById('temperature').textContent = data.temperature || '--';
+                document.getElementById('humidity').textContent = data.humidity || '--';
+                document.getElementById('time').textContent = data.current_time || '--';
+
+            }catch(e){
+                console.log(e);
+            }
+        }
+        fetchSensorData()
+        setInterval(fetchSensorData, 2000);
+    </script>
+</body>
+</html>
