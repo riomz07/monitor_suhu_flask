@@ -76,7 +76,7 @@ def sensor_data():
 def get_sensor_history():
     conn = sqlite3.connect('sensor_data.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT 100')
+    cursor.execute('SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT 10')
     rows = cursor.fetchall()
     conn.close()
 

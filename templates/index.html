@@ -13,12 +13,15 @@
             text-align: center;
             margin: 0;
             position: absolute;
-            top: 50vh; 
+            top: 20vh; 
             left: 50vh;
         }
         span {
             font-size: large;
             font-weight: bolder;
+        }
+        table {
+            width: 100%;
         }
     </style>
 </head>
@@ -27,6 +30,22 @@
     <p>Suhu: <span id="temperature">--</span> °C</p>
     <p>Kelembapan: <span id="humidity">--</span> %</p>
     <p>Update Terakhir: <span id="time">--</span></p>
+
+    <h2>Riwayat Data</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Suhu (°C)</th>
+                <th>Kelembapan (%)</th>
+                <th>Waktu</th>
+            </tr>
+        </thead>
+        <tbody id="history-table">
+            <!-- Data akan diisi dengan JavaScript -->
+        </tbody>
+    </table>
+
     <script>
         async function fetchSensorData() {
             console.log('Ambil data ke server...');
@@ -43,7 +62,31 @@
                 console.log(e);
             }
         }
+      
+        // Fungsi untuk mengambil riwayat data
+        async function fetchSensorHistory() {
+            const response = await fetch('/history');
+            const history = await response.json();
+            const historyTable = document.getElementById('history-table');
+
+            // Hapus konten tabel sebelumnya
+            historyTable.innerHTML = '';
+
+            // Tambahkan data baru ke tabel
+            history.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${item.temperature}</td>
+                    <td>${item.humidity}</td>
+                    <td>${item.timestamp}</td>
+                `;
+                historyTable.appendChild(row);
+            });
+        }
+
         fetchSensorData()
+        fetchSensorHistory()
         setInterval(fetchSensorData, 2000);
     </script>
 </body>

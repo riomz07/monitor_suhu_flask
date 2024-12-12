@@ -8,7 +8,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             temperature REAL NOT NULL,
             humidity REAL NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            timestamp DATETIME DEFAULT (datetime('now','localtime'))
         )
     ''')
     conn.commit()
