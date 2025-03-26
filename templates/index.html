@@ -1,44 +1,50 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Suhu dan Kelembapan</title>
-    <style>
-        html {
-            background-color: rgb(63, 63, 63); 
-            color: white;
-        }
-        body {  
-            text-align: center;
-            margin: 0;
-            position: absolute;
-            top: 20vh; 
-            left: 50vh;
-        }
-        span {
-            font-size: large;
-            font-weight: bolder;
-        }
-        table {
-            width: 100%;
-        }
-    </style>
+<title>Monitor Suhu Server</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="{{ url_for('static', filename='w3.css') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='ico.ico') }}" />
+<style>
+body,h1 {font-family: "Raleway", sans-serif}
+body, html {height: 100%}
+.bgimg {
+  background-image: url('{{ url_for('static', filename='bg.jpg') }}');
+  min-height: 100%;
+  background-position: center;
+  background-size: cover;
+}
+td, tr {
+    width: 300px;
+    text-align: center;
+}
+</style>
+<script src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}" ></script>
 </head>
 <body>
-    <h1>Monitoring Suhu dan Kelembapan</h1>
-    <p>Suhu: <span id="temperature">--</span> °C</p>
-    <p>Kelembapan: <span id="humidity">--</span> %</p>
-    <p>Update Terakhir: <span id="time">--</span></p>
 
-    <h2>Riwayat Data</h2>
-    <table>
+<div class="bgimg w3-display-container w3-animate-opacity w3-text-white">
+  <div class="w3-display-topleft w3-padding-large w3-xlarge">
+    Sensor UPA TIK
+  </div>
+  <div class="w3-display-middle">
+    <h1 class="w3-jumbo w3-animate-top" style="margin-bottom: 50px;">Server UPA TIK Lt2</h1>
+    <h1>Suhu: <span id="temperature" class="w3-jumbo w3-animate-top" style="font-weight: 900;">{{ temperature }}°C</span></h1>
+    <h1>Kelembapan: <span id="humidity" class="w3-jumbo w3-animate-top" style="font-weight: 900;">{{ humidity }}%</span></h1>
+    <hr class="w3-border-grey" style="margin:auto;width:40%">
+    <p id="current_time" class="w3-large w3-center">{{ current_time }}</p>
+    
+    
+    <p id="current_time" class="w3-center" style="font-size: 25px;margin-top: 50px; font-size: large; font-weight: bolder;">Sensor History</p>
+    <table style="margin-bottom: 50px;">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>Waktu</th>
                 <th>Suhu (°C)</th>
                 <th>Kelembapan (%)</th>
-                <th>Waktu</th>
             </tr>
         </thead>
         <tbody id="history-table">
@@ -46,48 +52,121 @@
         </tbody>
     </table>
 
-    <script>
-        async function fetchSensorData() {
-            console.log('Ambil data ke server...');
-            try {
-                const response = await fetch('/sensor');
-                console.log(response);
-                const data = await response.json();
-                console.log(data);
-                document.getElementById('temperature').textContent = data.temperature || '--';
-                document.getElementById('humidity').textContent = data.humidity || '--';
-                document.getElementById('time').textContent = data.current_time || '--';
 
-            }catch(e){
-                console.log(e);
+    <div class="w3-center">
+        <button id="testNotif" class="w3-btn w3-blue w3-auto">Test Notif Telegram</button>
+        <button id="warningSound" class="w3-btn w3-orange w3-auto">Turn On Sound</button>   
+    </div>
+
+
+    <audio id="warning-sound" src="{{ url_for('static', filename='alarm_suhu.mp3') }}"></audio>
+  </div>
+  <div class="w3-display-bottomleft w3-padding-large">
+    Powered by TIM Jaringan UPA TIK</a>
+  </div>
+</div>
+
+<script>
+    var warning = false
+
+    // Fungsi untuk mengambil data dari server menggunakan jQuery
+    function fetchData() {
+    $.ajax({
+        url: '/sensor-data',  // URL endpoint untuk mendapatkan data
+        method: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            console.log(`${data.temperature}-${data.humidity}-${data.current_time}`);
+            // Memperbarui konten HTML dengan data yang diperoleh
+            $('#temperature').text(data.temperature + '°C');
+            $('#humidity').text(data.humidity + '%');
+            $('#current_time').text(data.current_time);
+            if(data.temperature>=25 && warning){
+                console.log('Play Warning');
+                var warningSound = document.getElementById('warning-sound');
+                warningSound.play();
             }
+            if(data.temperature>=25){
+                console.log('Red');
+                $('#temperature').addClass('w3-text-red');
+            }else{
+                console.log('Green');
+                $('#temperature').addClass('w3-text-aqua');
+            }
+            fetchDataHistory()
+        },
+        error: function(status,error) {
+            console.error('Status Error fetching data:', status);
+            console.error('Error fetching data:', error);
         }
-      
-        // Fungsi untuk mengambil riwayat data
-        async function fetchSensorHistory() {
-            const response = await fetch('/history');
-            const history = await response.json();
+    });
+    }
+    
+    // Fungsi untuk mengambil data dari server menggunakan jQuery
+    function fetchDataHistory() {
+    $.ajax({
+        url: '/history',  // URL endpoint untuk mendapatkan data
+        method: 'GET',
+        dataType: 'json',
+        success: function(data) {
             const historyTable = document.getElementById('history-table');
 
             // Hapus konten tabel sebelumnya
             historyTable.innerHTML = '';
 
             // Tambahkan data baru ke tabel
-            history.forEach(item => {
+            data.forEach(item => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${item.id}</td>
+                    <td>${item.timestamp}</td>
                     <td>${item.temperature}</td>
                     <td>${item.humidity}</td>
-                    <td>${item.timestamp}</td>
                 `;
                 historyTable.appendChild(row);
             });
+        },
+        error: function(status,error) {
+            console.error('Status Error fetching data:', status);
+            console.error('Error fetching data:', error);
         }
+    });
+    }
+    
+    $('#warningSound').click( function() {
+        warning = !warning
+        if(warning){
+            $(this).text('Turn Off Sound')
+        }else{    
+            $(this).text('Turn On Sound')
+        }
+        console.log(warning);
+    })
 
-        fetchSensorData()
-        fetchSensorHistory()
-        setInterval(fetchSensorData, 2000);
-    </script>
+    $('#testNotif').click( function() {
+        $.ajax({
+            url: '/test-notif',  // URL endpoint untuk mendapatkan data
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                console.log(data)
+                alert('Sukses Terkirim')
+            },
+            error: function(error) {
+                alert('Gagal Terkirim')
+            }
+        });
+    }
+    )
+
+    // Panggil fungsi fetchData setiap 10 detik
+    setInterval(fetchData, 10000);
+
+    // Panggil fungsi fetchData pertama kali saat halaman dimuat
+    $(document).ready(function() {
+        fetchData();
+    });
+
+</script>
+
 </body>
 </html>
