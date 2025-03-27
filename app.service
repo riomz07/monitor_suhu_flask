@@ -1,0 +1,16 @@
+[Unit]
+Description=Gunicorn instance to serve Flask app
+After=network.target
+
+[Service]
+User=mimin
+WorkingDirectory=/home/mimin/Script
+Environment="PATH=/home/mimin/Script/venv/bin"
+ExecStart=/home/mimin/Script/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:5000 app:app
+
+Restart=always
+RestartSec=5
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
